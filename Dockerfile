@@ -16,6 +16,9 @@ ARG AIRFLOW_VERSION=1.10.7
 ARG AIRFLOW_USER_HOME=/usr/local/airflow
 ARG AIRFLOW_DEPS=""
 ARG PYTHON_DEPS=""
+# Reference https://raw.githubusercontent.com/grafana/grafana-docker/master/Dockerfile
+ARG AIRFLOW_UID="472"
+ARG AIRFLOW_GID="472"
 ENV AIRFLOW_HOME=${AIRFLOW_USER_HOME}
 
 # Define en_US.
@@ -53,7 +56,8 @@ RUN set -ex \
     && sed -i 's/^# en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/g' /etc/locale.gen \
     && locale-gen \
     && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
-    && useradd -ms /bin/bash -d ${AIRFLOW_USER_HOME} airflow \
+    && groupadd -r -g $AIRFLOW_GID airflow \
+    && useradd -r -ms /bin/bash -u $AIRFLOW_UID -g airflow airflow \
     && pip install --upgrade pip"<20.0" \
     && pip install -U pip setuptools wheel \
     && pip install pytz \
@@ -73,6 +77,8 @@ RUN set -ex \
         /usr/share/man \
         /usr/share/doc \
         /usr/share/doc-base
+
+RUN pip install apache-airflow
 
 COPY script/entrypoint.sh /entrypoint.sh
 COPY config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
